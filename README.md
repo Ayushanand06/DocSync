@@ -1,4 +1,4 @@
-# Medical Query Analysis System
+# <h1 align="center">DocSync</h>
 
 A comprehensive AI-powered medical consultation platform that combines voice call capabilities with intelligent medical analysis using Groq LLM.
 
