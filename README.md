@@ -13,6 +13,7 @@ This project implements a medical consultation system that:
 
 ## 🏗️ Architecture
 
+<img width="8192" height="3541" alt="image" src="https://github.com/user-attachments/assets/c9a0872c-8931-4e20-bc9a-587a417e1509" />
 
 
 ## ✨ Features
@@ -89,4 +90,3 @@ node call.js
 
 ---
 
-**Last Updated:** February 1, 2026 | **Version:** 1.0
