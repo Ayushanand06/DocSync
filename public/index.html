@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DocSync Consultation</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">DS</span>
+          <div>
+            <strong>DocSync</strong>
+            <span>Medical AI Console</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Primary">
+          <button class="nav-item active" type="button">Consult</button>
+          <button class="nav-item" type="button">History</button>
+          <button class="nav-item" type="button">Patients</button>
+          <button class="nav-item" type="button">Status</button>
+          <button class="nav-item" type="button">Settings</button>
+        </nav>
+
+        <div class="sidebar-status">
+          <span class="status-dot" id="apiDot"></span>
+          <div>
+            <strong id="apiStatus">Checking system</strong>
+            <span id="apiDetail">Connecting to DocSync services</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <h1>Consultation Workspace</h1>
+            <p>Capture symptoms, transcribe voice with Whisper, and review AI guidance.</p>
+          </div>
+          <div class="topbar-actions">
+            <span class="pill" id="sessionSource">Text session</span>
+            <button class="icon-button" id="clearSession" type="button" title="Clear session">Clear</button>
+          </div>
+        </header>
+
+        <section class="consult-grid" aria-label="Consultation workspace">
+          <section class="panel intake-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Patient Intake</h2>
+                <p>Optional context for safer, clearer triage.</p>
+              </div>
+            </div>
+
+            <div class="field-grid">
+              <label>
+                Patient name
+                <input id="patientName" type="text" placeholder="Name or case ID" />
+              </label>
+              <label>
+                Age
+                <input id="patientAge" type="number" min="0" max="120" placeholder="Years" />
+              </label>
+              <label>
+                Gender
+                <select id="patientGender">
+                  <option value="">Not specified</option>
+                  <option>Female</option>
+                  <option>Male</option>
+                  <option>Other</option>
+                </select>
+              </label>
+              <label>
+                Severity
+                <select id="severity">
+                  <option>Mild</option>
+                  <option>Moderate</option>
+                  <option>Severe</option>
+                  <option>Emergency</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="full-field">
+              Symptoms or concern
+              <textarea id="queryInput" rows="8" placeholder="Example: Fever, sore throat, and body pain for two days."></textarea>
+            </label>
+
+            <label class="full-field">
+              Allergies / current medication
+              <input id="notes" type="text" placeholder="Example: Penicillin allergy, taking metformin" />
+            </label>
+
+            <div class="actions-row">
+              <button class="primary-button" id="sendQuery" type="button">Send Query</button>
+              <button class="secondary-button" id="saveSession" type="button">Save Session</button>
+            </div>
+          </section>
+
+          <section class="panel voice-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Whisper Voice Capture</h2>
+                <p>Record browser audio, transcribe, then send to analysis.</p>
+              </div>
+              <span class="recording-state" id="recordingState">Idle</span>
+            </div>
+
+            <div class="recording-meter" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+
+            <div class="voice-controls">
+              <button class="record-button" id="recordButton" type="button">
+                <span id="recordIcon"></span>
+                <strong id="recordLabel">Start Recording</strong>
+              </button>
+              <div>
+                <strong id="recordTimer">00:00</strong>
+                <span id="voiceHint">Whisper transcription will appear below.</span>
+              </div>
+            </div>
+
+            <div class="transcript-box">
+              <div class="box-heading">
+                <strong>Transcript</strong>
+                <button class="text-button" id="useTranscript" type="button">Use as Query</button>
+              </div>
+              <p id="transcriptText">No voice transcript yet.</p>
+            </div>
+
+            <div class="twilio-strip">
+              <span class="status-dot muted"></span>
+              <div>
+                <strong>Twilio stream ready</strong>
+                <span>Point your webhook to <code>/twilio/voice</code> for call capture.</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel advice-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>AI Medical Guidance</h2>
+                <p>Review before acting or sharing with a patient.</p>
+              </div>
+              <span class="pill danger" id="riskPill">Safety review</span>
+            </div>
+
+            <div class="advice-output" id="adviceOutput">
+              <p>Submit a text query or record audio to generate guidance.</p>
+            </div>
+
+            <div class="safety-block">
+              <strong>Clinical safety note</strong>
+              <p>This tool provides AI assistance only. For chest pain, breathing difficulty, fainting, severe bleeding, stroke signs, poisoning, or rapidly worsening symptoms, seek emergency care immediately.</p>
+            </div>
+          </section>
+
+          <section class="panel history-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Session History</h2>
+                <p>Saved locally in this browser for quick review.</p>
+              </div>
+            </div>
+            <div class="history-list" id="historyList">
+              <p class="empty-state">No saved sessions yet.</p>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
