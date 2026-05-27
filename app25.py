@@ -44,10 +44,12 @@ app = FastAPI()
 
 @app.post("/process-query")
 async def process_query(data: dict = Body(...)):
-    if not isinstance(data, dict) or "query" not in data:
-        raise HTTPException(status_code=400, detail="Invalid input format. Please provide a JSON object with a 'query' key.")
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=400, detail="Invalid input format. Please provide a JSON object.")
     
-    query = data.get("query", "")
+    query = data.get("query") or data.get("message") or data.get("symptoms") or ""
+    if isinstance(query, list):
+        query = ", ".join(str(item) for item in query)
     
     if not query:
         return {"response": "No query provided"}
@@ -62,6 +64,10 @@ def analyze_query(query):
     input_data = {"patient_symptoms": query}
     result = MedicalCrew.kickoff(inputs=input_data)
     return process_medical_response(result)
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "service": "docsync-medical-analysis"}
 
 def process_medical_response(result):
     if isinstance(result, str):
