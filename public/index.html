@@ -18,11 +18,11 @@
         </div>
 
         <nav class="nav-list" aria-label="Primary">
-          <button class="nav-item active" type="button">Consult</button>
-          <button class="nav-item" type="button">History</button>
-          <button class="nav-item" type="button">Patients</button>
-          <button class="nav-item" type="button">Status</button>
-          <button class="nav-item" type="button">Settings</button>
+          <button class="nav-item active" type="button" data-view="consult">Consult</button>
+          <button class="nav-item" type="button" data-view="history">History</button>
+          <button class="nav-item" type="button" data-view="patients">Patients</button>
+          <button class="nav-item" type="button" data-view="status">Status</button>
+          <button class="nav-item" type="button" data-view="settings">Settings</button>
         </nav>
 
         <div class="sidebar-status">
@@ -42,10 +42,12 @@
           </div>
           <div class="topbar-actions">
             <span class="pill" id="sessionSource">Text session</span>
+            <button class="secondary-button" id="endSession" type="button">End Session</button>
             <button class="icon-button" id="clearSession" type="button" title="Clear session">Clear</button>
           </div>
         </header>
 
+        <section class="view-panel active" id="consultView">
         <section class="consult-grid" aria-label="Consultation workspace">
           <section class="panel intake-panel">
             <div class="panel-heading">
@@ -86,7 +88,7 @@
 
             <label class="full-field">
               Symptoms or concern
-              <textarea id="queryInput" rows="8" placeholder="Example: Fever, sore throat, and body pain for two days."></textarea>
+              <textarea id="queryInput" rows="8" placeholder="Ask the first question, then continue with follow-ups in the chat."></textarea>
             </label>
 
             <label class="full-field">
@@ -95,7 +97,7 @@
             </label>
 
             <div class="actions-row">
-              <button class="primary-button" id="sendQuery" type="button">Send Query</button>
+              <button class="primary-button" id="sendQuery" type="button">Send Message</button>
               <button class="secondary-button" id="saveSession" type="button">Save Session</button>
             </div>
           </section>
@@ -154,8 +156,16 @@
               <span class="pill danger" id="riskPill">Safety review</span>
             </div>
 
-            <div class="advice-output" id="adviceOutput">
-              <p>Submit a text query or record audio to generate guidance.</p>
+            <div class="chat-output" id="chatOutput" aria-live="polite">
+              <article class="chat-message assistant">
+                <strong>DocSync</strong>
+                <p>Submit a text query or record audio to start the consultation.</p>
+              </article>
+            </div>
+
+            <div class="chat-compose">
+              <textarea id="followupInput" rows="3" placeholder="Ask a follow-up question..."></textarea>
+              <button class="primary-button" id="sendFollowup" type="button">Send</button>
             </div>
 
             <div class="safety-block">
@@ -163,16 +173,78 @@
               <p>This tool provides AI assistance only. For chest pain, breathing difficulty, fainting, severe bleeding, stroke signs, poisoning, or rapidly worsening symptoms, seek emergency care immediately.</p>
             </div>
           </section>
+        </section>
+        </section>
 
-          <section class="panel history-panel">
+        <section class="view-panel" id="historyView">
+          <section class="panel full-panel">
             <div class="panel-heading">
               <div>
                 <h2>Session History</h2>
-                <p>Saved locally in this browser for quick review.</p>
+                <p>Saved locally in this browser after you end or save a consultation.</p>
               </div>
+              <button class="secondary-button" id="clearHistory" type="button">Clear History</button>
             </div>
             <div class="history-list" id="historyList">
               <p class="empty-state">No saved sessions yet.</p>
+            </div>
+          </section>
+        </section>
+
+        <section class="view-panel" id="patientsView">
+          <section class="panel full-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Patients</h2>
+                <p>Recent patient records created from saved sessions.</p>
+              </div>
+            </div>
+            <div class="patient-list" id="patientList">
+              <p class="empty-state">No patient records yet.</p>
+            </div>
+          </section>
+        </section>
+
+        <section class="view-panel" id="statusView">
+          <section class="panel full-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Status</h2>
+                <p>Local service and model configuration.</p>
+              </div>
+              <button class="secondary-button" id="refreshStatus" type="button">Refresh</button>
+            </div>
+            <dl class="status-grid" id="statusGrid"></dl>
+          </section>
+        </section>
+
+        <section class="view-panel" id="settingsView">
+          <section class="panel full-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Settings</h2>
+                <p>Browser-only preferences for this workstation.</p>
+              </div>
+            </div>
+            <div class="settings-grid">
+              <label>
+                Auto-save completed sessions
+                <select id="autoSaveSetting">
+                  <option value="on">On</option>
+                  <option value="off">Off</option>
+                </select>
+              </label>
+              <label>
+                Default session source
+                <select id="defaultSourceSetting">
+                  <option value="Text session">Text session</option>
+                  <option value="Voice session">Voice session</option>
+                </select>
+              </label>
+              <label>
+                History limit
+                <input id="historyLimitSetting" type="number" min="3" max="50" value="12" />
+              </label>
             </div>
           </section>
         </section>
