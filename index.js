@@ -2,7 +2,7 @@ const express = require("express");
 const WebSocket = require("ws");
 const axios = require("axios");
 const path = require("path");
-require("dotenv").config();
+require("dotenv").config({ override: true });
 
 const app = express();
 const server = require("http").createServer(app);
@@ -11,6 +11,7 @@ const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 8080;
 const MEDICAL_API_URL = process.env.MEDICAL_API_URL || "http://127.0.0.1:8000/process-query";
 const WHISPER_MODEL = process.env.WHISPER_MODEL || "whisper-large-v3";
+const GROQ_CHAT_MODEL = process.env.GROQ_CHAT_MODEL || "llama-3.1-8b-instant";
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -26,13 +27,81 @@ async function analyzeMedicalQuery(query, meta = {}) {
     return "No symptoms or query were provided.";
   }
 
-  const response = await axios.post(MEDICAL_API_URL, {
-    query: query.trim(),
-    source: meta.source || "text",
-    patient: meta.patient || {},
+  try {
+    const response = await axios.post(MEDICAL_API_URL, {
+      query: query.trim(),
+      source: meta.source || "text",
+      patient: meta.patient || {},
+      history: meta.history || [],
+    });
+
+    return normalizeMedicalResponse(response.data);
+  } catch (error) {
+    return analyzeMedicalQueryWithGroq(query, meta);
+  }
+}
+
+async function analyzeMedicalQueryWithGroq(query, meta = {}) {
+  if (!process.env.GROQ_API_KEY && !process.env.GROQ_API_KEY_JS) {
+    throw new Error("Missing GROQ_API_KEY or GROQ_API_KEY_JS for medical analysis.");
+  }
+
+  let Groq;
+  try {
+    Groq = require("groq-sdk");
+  } catch (error) {
+    throw new Error("Install groq-sdk to enable Groq medical analysis: npm install groq-sdk");
+  }
+
+  const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY_JS || process.env.GROQ_API_KEY,
   });
 
-  return normalizeMedicalResponse(response.data);
+  const patient = meta.patient || {};
+  const history = Array.isArray(meta.history) ? meta.history.slice(-10) : [];
+  const patientContext = [
+    patient.name ? `Name/case ID: ${patient.name}` : "",
+    patient.age ? `Age: ${patient.age}` : "",
+    patient.gender ? `Gender: ${patient.gender}` : "",
+    patient.severity ? `Severity: ${patient.severity}` : "",
+    patient.notes ? `Allergies/current medication: ${patient.notes}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const messages = [
+    {
+      role: "system",
+      content:
+        "You are a careful medical guidance assistant in a consultation chat. Answer the user's latest question using the patient context and prior messages. Give brief, practical triage guidance, mention urgent red flags when relevant, and advise consulting a licensed clinician. Do not provide a diagnosis as certain.",
+    },
+  ];
+
+  if (patientContext) {
+    messages.push({
+      role: "system",
+      content: `Patient context:\n${patientContext}`,
+    });
+  }
+
+  history.forEach((message) => {
+    if (!message || !["user", "assistant"].includes(message.role)) return;
+    const content = String(message.content || "").trim();
+    if (!content) return;
+    messages.push({ role: message.role, content });
+  });
+
+  messages.push({
+    role: "user",
+    content: query.trim(),
+  });
+
+  const completion = await groq.chat.completions.create({
+    model: GROQ_CHAT_MODEL,
+    messages,
+    temperature: 0.2,
+  });
+
+  return completion.choices?.[0]?.message?.content?.trim() || "No guidance was returned.";
 }
 
 async function transcribeWithWhisper(buffer, filename, contentType) {
@@ -103,6 +172,7 @@ app.get("/api/health", (_req, res) => {
     status: "ok",
     medicalApiUrl: MEDICAL_API_URL,
     whisperModel: WHISPER_MODEL,
+    groqChatModel: GROQ_CHAT_MODEL,
     whisperConfigured: Boolean(process.env.GROQ_API_KEY || process.env.GROQ_API_KEY_JS),
   });
 });
@@ -112,6 +182,7 @@ app.post("/api/query", async (req, res) => {
     const advice = await analyzeMedicalQuery(req.body.query || req.body.message || "", {
       source: req.body.source || "text",
       patient: req.body.patient || {},
+      history: req.body.history || [],
     });
     res.json({ response: advice });
   } catch (error) {

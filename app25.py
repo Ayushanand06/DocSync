@@ -6,14 +6,14 @@ import uvicorn
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv(override=True)
 
 # Set the Groq API key
 os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
 
 llm = ChatGroq(
     api_key=os.environ["GROQ_API_KEY"],
-    model_name="llama3-8b-8192"
+    model_name=os.getenv("GROQ_CHAT_MODEL", "llama-3.1-8b-instant")
 )
 
 # Creating agent
@@ -77,4 +77,4 @@ def process_medical_response(result):
     return "I'm sorry, I couldn't provide specific medical advice for your symptoms."
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="https://d8c7-119-161-98-139.ngrok-free.app", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
